@@ -132,7 +132,13 @@ function floodFill(x, y, fillColor = [0, 0, 0, 255]) {
     if (cy < canvas.height - 1) stack.push([cx, cy + 1]);
   }
 
-  ctx.putImageData(imageData, 0, 0);
+  // Save the filled image as a special shape
+  shapes.push({
+    type: 'fill',
+    imageData: imageData
+  });
+
+  redrawCanvas(); // <- re-render everything including this new fill
 }
 
 // Redraw everything
@@ -142,7 +148,13 @@ function redrawCanvas() {
   if (previewShape) drawShape(previewShape);
 }
 
-function drawShape({ type, x1, y1, x2, y2, fill, lineWidth, preview }) {
+function drawShape(shape) {
+  if (shape.type === 'fill') {
+    ctx.putImageData(shape.imageData, 0, 0);
+    return;
+  }
+
+  const { type, x1, y1, x2, y2, fill, lineWidth, preview } = shape;
   const color = preview ? '#999' : '#000';
   ctx.strokeStyle = color;
   ctx.fillStyle = color;
