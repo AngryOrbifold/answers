@@ -43,7 +43,6 @@ eraseBtn.addEventListener('click', () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   shapes = [];
   undone = []
-  drawHistory.length = 0; // Clear undo stack if you're tracking it
 });
 
 canvas.addEventListener('mousedown', (e) => {
