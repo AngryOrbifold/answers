@@ -14,32 +14,6 @@ function addMessage(text, sender = 'bot') {
   messages.scrollTop = messages.scrollHeight;
 }
 
-// On page load, parse token from URL hash and save it
-window.addEventListener('load', () => {
-  const hash = window.location.hash.substring(1); // remove #
-  const params = new URLSearchParams(hash);
-  const accessToken = params.get('access_token');
-  if (accessToken) {
-    sessionStorage.setItem('twitchAccessToken', accessToken);
-
-    // Remove token from URL so it doesn't remain visible
-    history.replaceState(null, '', window.location.pathname);
-  }
-
-  // Now that token is saved or was already saved, initialize the app
-  initApp();
-});
-
-window.addEventListener('message', (event) => {
-  console.log("🔔 Iframe received message:", event.data);
-  const data = event.data;
-  if (data?.type === 'twitch-token' && data.token) {
-    sessionStorage.setItem('twitchAccessToken', data.token);
-    console.log("✅ Token saved:", data.token);
-    initApp();
-  }
-});
-
 function initApp() {
   const token = sessionStorage.getItem('twitchAccessToken');
   console.log("initApp token:", token);
