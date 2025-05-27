@@ -15,10 +15,6 @@ function addMessage(text, sender = 'bot') {
 }
 
 window.addEventListener('message', (event) => {
-  // Optionally check event.origin here for security
-  // const allowedOrigin = 'https://your-wix-site.com';
-  // if (event.origin !== allowedOrigin) return;
-
   console.log("🔔 Iframe received message:", event.data);
   const data = event.data;
   if (data?.type === 'twitch-token' && data.token) {
