@@ -15,7 +15,7 @@ function addMessage(text, sender = 'bot') {
   messages.scrollTop = messages.scrollHeight;
 }
 
-function sendAnswer() {
+async function sendAnswer() {
   const answer = input.value.trim();
   if (!answer) return;
 
@@ -23,55 +23,34 @@ function sendAnswer() {
   input.value = '';
   submitBtn.disabled = true;
 
-  console.log("Sending:", {
-    answer,
-    channelId,
-    username,
-    userId
-  });
- 
-  fetch('https://twitch-extension-backend.onrender.com/submit-answer', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + token
-    },
-    body: JSON.stringify({
-      answer,
-      channelId,
-      userId
-    }),
-    mode: 'cors', // optional, default
-  })
-  .then(async res => {
-    const contentType = res.headers.get("content-type");
-    const text = await res.text();  // read raw response
-    console.log("Raw response text:", text);
+  try {
+    const res = await fetch('https://your-backend/submit-answer', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + oauthAccessToken  // <-- Twitch OAuth token
+      },
+      body: JSON.stringify({
+        answer,
+        userId,   // optional, can also be read from token on backend
+        username  // optional, same here
+      }),
+      mode: 'cors',
+    });
 
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status} - ${text}`);
-    }
+    const text = await res.text();
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${text}`);
 
-    try {
-      const data = JSON.parse(text);
-      if (data.reply) {
-        addMessage(`Bot: ${data.reply}`, 'bot');
-      } else {
-        addMessage("Bot: No reply received from server.", 'bot');
-      }
-    } catch (err) {
-      console.error("Failed to parse JSON:", err);
-      addMessage("Bot: Invalid JSON received from server.", 'bot');
-    }
-  })
-  .catch(err => {
+    const data = JSON.parse(text);
+    addMessage(data.reply || "Bot: No reply received from server.", 'bot');
+
+  } catch (err) {
     console.error("Request error:", err);
     addMessage("Bot: Error sending your answer.", 'bot');
-  })
-  .finally(() => {
+  } finally {
     submitBtn.disabled = false;
     input.focus();
-  });
+  }
 }
 
 submitBtn.onclick = sendAnswer;
