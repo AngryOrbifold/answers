@@ -30,6 +30,15 @@ window.addEventListener('load', () => {
   initApp();
 });
 
+window.addEventListener('message', (event) => {
+  if (event.data.type === 'twitch-token' && event.data.token) {
+    sessionStorage.setItem('twitchAccessToken', event.data.token);
+    console.log('Token received from parent page:', event.data.token);
+    // Then you can call initApp() or trigger your login logic here
+    initApp();
+  }
+});
+
 function initApp() {
   const token = sessionStorage.getItem('twitchAccessToken');
   console.log("initApp token:", token);
