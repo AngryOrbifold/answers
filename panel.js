@@ -29,7 +29,7 @@ window.addEventListener('message', (event) => {
 });
 
 window.onload = () => {
-  // Notify parent window that iframe is ready
+  console.log("Iframe loaded, sending ready message");
   window.parent.postMessage({ type: 'iframe-ready' }, '*');
 };
 
