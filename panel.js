@@ -323,6 +323,9 @@ function sendCanvasToBackend(id) {
 
       fetch(`https://twitch-extension-backend.onrender.com/submit-image`, {
         method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token
+        },
         body: formData
       })
         .then(res => res.text())
