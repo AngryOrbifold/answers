@@ -28,6 +28,11 @@ window.addEventListener('message', (event) => {
   }
 });
 
+window.onload = () => {
+  // Notify parent window that iframe is ready
+  window.parent.postMessage({ type: 'iframe-ready' }, '*');
+};
+
 function initApp() {
   const token = sessionStorage.getItem('twitchAccessToken');
   console.log("initApp token:", token);
