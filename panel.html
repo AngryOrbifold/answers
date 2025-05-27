@@ -33,15 +33,5 @@
   <input type="text" id="input" placeholder="ID 77 Answer" />
   <button id="submit">Submit</button>
   <script src="panel.js"></script>
-  <script>
-    window.addEventListener('message', (event) => {
-      const data = event.data;
-      if (data?.type === 'twitch-token' && data.token) {
-        console.log("✅ Received token from parent:", data.token);
-        sessionStorage.setItem('twitchAccessToken', data.token);
-        initApp();  // call your initialization function
-      }
-    });
-  </script>
 </body>
 </html>
