@@ -32,6 +32,7 @@ window.addEventListener('load', () => {
 
 function initApp() {
   const token = sessionStorage.getItem('twitchAccessToken');
+  console.log("initApp token:", token);
   if (!token) {
     addMessage("Bot: You must log in first.", 'bot');
     submitBtn.disabled = true;
@@ -45,10 +46,12 @@ function initApp() {
     }
   })
   .then(res => {
+    console.log("User info fetch status:", res.status);
     if (!res.ok) throw new Error(`Failed to fetch user info: ${res.status}`);
     return res.json();
   })
   .then(data => {
+    console.log("User info response data:", data);
     if (data.data && data.data.length > 0) {
       const user = data.data[0];
       username = user.login;
@@ -63,7 +66,7 @@ function initApp() {
     }
   })
   .catch(err => {
-    console.error(err);
+    console.error("Error fetching user info:", err);
     addMessage("Bot: Error getting user info.", 'bot');
     submitBtn.disabled = true;
   });
@@ -84,7 +87,7 @@ async function sendAnswer() {
   submitBtn.disabled = true;
 
   try {
-    const res = await fetch('https://your-backend/submit-answer', {
+    const res = await fetch('https://twitch-extension-backend.onrender.com/submit-answer', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
