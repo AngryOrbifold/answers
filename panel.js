@@ -1,4 +1,4 @@
-let channelId = null;  // if you want to set it from somewhere, or hardcode
+let channelId = null;
 let username = null;
 let userId = null;
 
@@ -6,13 +6,38 @@ const input = document.getElementById('input');
 const submitBtn = document.getElementById('submit');
 const messages = document.getElementById('messages');
 
-const token = sessionStorage.getItem("twitchAccessToken");  // Load token once
+function addMessage(text, sender = 'bot') {
+  const div = document.createElement('div');
+  div.textContent = text;
+  div.style.color = sender === 'user' ? '#333' : '#007bff';
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
 
-if (!token) {
-  addMessage("Bot: You must log in first.", 'bot');
-  submitBtn.disabled = true;
-} else {
-  // Fetch user info from Twitch API to get username and userId
+// On page load, parse token from URL hash and save it
+window.addEventListener('load', () => {
+  const hash = window.location.hash.substring(1); // remove #
+  const params = new URLSearchParams(hash);
+  const accessToken = params.get('access_token');
+  if (accessToken) {
+    sessionStorage.setItem('twitchAccessToken', accessToken);
+
+    // Remove token from URL so it doesn't remain visible
+    history.replaceState(null, '', window.location.pathname);
+  }
+
+  // Now that token is saved or was already saved, initialize the app
+  initApp();
+});
+
+function initApp() {
+  const token = sessionStorage.getItem('twitchAccessToken');
+  if (!token) {
+    addMessage("Bot: You must log in first.", 'bot');
+    submitBtn.disabled = true;
+    return;
+  }
+
   fetch("https://api.twitch.tv/helix/users", {
     headers: {
       "Authorization": "Bearer " + token,
@@ -28,9 +53,10 @@ if (!token) {
       const user = data.data[0];
       username = user.login;
       userId = user.id;
-      channelId = user.id;  // or wherever your channel ID comes from
+      channelId = user.id;  // or your channel ID logic
 
       addMessage(`Bot: Logged in as ${username}`, 'bot');
+      submitBtn.disabled = false;
     } else {
       addMessage("Bot: Could not get user info.", 'bot');
       submitBtn.disabled = true;
@@ -43,15 +69,13 @@ if (!token) {
   });
 }
 
-function addMessage(text, sender = 'bot') {
-  const div = document.createElement('div');
-  div.textContent = text;
-  div.style.color = sender === 'user' ? '#333' : '#007bff';
-  messages.appendChild(div);
-  messages.scrollTop = messages.scrollHeight;
-}
-
 async function sendAnswer() {
+  const token = sessionStorage.getItem("twitchAccessToken");
+  if (!token) {
+    addMessage("Bot: You must log in first.", 'bot');
+    return;
+  }
+
   const answer = input.value.trim();
   if (!answer) return;
 
