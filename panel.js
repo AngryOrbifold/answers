@@ -14,6 +14,20 @@ function addMessage(text, sender = 'bot') {
   messages.scrollTop = messages.scrollHeight;
 }
 
+window.addEventListener('message', (event) => {
+  // Optionally check event.origin here for security
+  // const allowedOrigin = 'https://your-wix-site.com';
+  // if (event.origin !== allowedOrigin) return;
+
+  console.log("🔔 Iframe received message:", event.data);
+  const data = event.data;
+  if (data?.type === 'twitch-token' && data.token) {
+    sessionStorage.setItem('twitchAccessToken', data.token);
+    console.log("✅ Token saved:", data.token);
+    initApp();
+  }
+});
+
 function initApp() {
   const token = sessionStorage.getItem('twitchAccessToken');
   console.log("initApp token:", token);
