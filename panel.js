@@ -16,7 +16,7 @@ if (!token) {
   fetch("https://api.twitch.tv/helix/users", {
     headers: {
       "Authorization": "Bearer " + token,
-      "Client-Id": "YOUR_TWITCH_CLIENT_ID"  // replace with your client ID
+      "Client-Id": "1ukz04k3le4774ykaxyd3pxxjkx1c5"  // replace with your client ID
     }
   })
   .then(res => {
