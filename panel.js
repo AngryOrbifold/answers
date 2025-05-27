@@ -7,12 +7,6 @@ const input = document.getElementById('input');
 const submitBtn = document.getElementById('submit');
 const messages = document.getElementById('messages');
 
-console.log("Twitch viewer info:", window.Twitch.ext.viewer);
-
-document.body.addEventListener("click", () => {
-  Twitch.ext.rig.log("Extension clicked - identity may now be available.");
-});
-
 function addMessage(text, sender = 'bot') {
   const div = document.createElement('div');
   div.textContent = text;
@@ -46,7 +40,7 @@ function sendAnswer() {
       answer,
       channelId,
       userId
-    })
+    }),
     mode: 'cors', // optional, default
   })
   .then(async res => {
@@ -81,10 +75,6 @@ function sendAnswer() {
 }
 
 submitBtn.onclick = sendAnswer;
-input.onkeydown  = (e) => {
-  if (e.key === 'Enter') 
-    sendAnswer();
-};
 
 function parseJwt(token) {
   try {
