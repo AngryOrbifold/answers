@@ -306,39 +306,50 @@ function isCanvasBlank(canvas) {
 
 function sendCanvasToBackend(id, token) {
   return new Promise((resolve, reject) => {
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
-    for (let i = 0; i < data.length; i += 4) {
-      const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-      const value = avg > 127 ? 255 : 0;
-      data[i] = data[i + 1] = data[i + 2] = value;
-    }
-    ctx.putImageData(imageData, 0, 0);
+    try {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        const value = avg > 127 ? 255 : 0;
+        data[i] = data[i + 1] = data[i + 2] = value;
+      }
+      ctx.putImageData(imageData, 0, 0);
+      canvas.toBlob(blob => {
+        if (!blob) {
+          console.error("Blob generation failed");
+          reject("Blob generation failed");
+          return;
+        }
+        const formData = new FormData();
+        formData.append('image', blob, `canvas_id${id}.jpg`);
+        formData.append('id', id);
 
-    canvas.toBlob(blob => {
-      if (!blob) return reject("Blob generation failed");
-      const formData = new FormData();
-      formData.append('image', blob, `canvas_id${id}.jpg`);
-      formData.append('id', id);
-
-      fetch(`https://twitch-extension-backend.onrender.com/submit-image`, {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + token
-        },
-        body: formData
-      })
-        .then(res => res.text())
-        .then(text => {
-          console.log("Upload response:", text);
-          addMessage("Bot: Drawing sent with ID " + id, 'bot');
-          resolve();
+        fetch(`https://twitch-extension-backend.onrender.com/submit-image`, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + token
+          },
+          body: formData
         })
-        .catch(err => {
-          console.error("Upload error:", err);
-          addMessage("Bot: Error sending image.", 'bot');
-          reject(err);
-        });
-    }, 'image/jpeg', 0.95);
+          .then(res => {
+            if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+            return res.text();
+          })
+          .then(text => {
+            console.log("Upload response:", text);
+            addMessage("Bot: Drawing sent with ID " + id, 'bot');
+            resolve();
+          })
+          .catch(err => {
+            console.error("Upload error:", err);
+            addMessage("Bot: Error sending image.", 'bot');
+            reject(err);
+          });
+      }, 'image/jpeg', 0.95);
+    } catch (err) {
+      console.error("Unexpected error in sendCanvasToBackend:", err);
+      reject(err);
+    }
   });
 }
