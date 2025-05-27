@@ -2,35 +2,103 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Answer Form</title>
+  <title>Answer Panel</title>
   <style>
     body {
       font-family: sans-serif;
       margin: 0;
-      padding: 10px;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
     }
+
+    .panel-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 20px;
+    }
+
     #messages {
       border: 1px solid #ccc;
-      height: 100px;
+      height: 60px;
       overflow-y: auto;
-      margin-bottom: 10px;
-      padding: 5px;
+      margin-bottom: 15px;
+      padding: 8px;
       font-size: 14px;
       background: #f9f9f9;
+      border-radius: 4px;
     }
+
+    .tools span {
+      min-width: 24px;
+      display: inline-block;
+      text-align: center;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      border: 1px solid #000;
+      border-radius: 4px;
+    }
+
     #input {
-      width: 90%;
-      padding: 5px;
+      width: calc(100% - 90px);
+      padding: 8px;
+      margin-right: 10px;
+      font-size: 14px;
+      box-sizing: border-box;
     }
+
     #submit {
-      padding: 5px 10px;
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+
+    #submit:disabled {
+      background: #ccc;
+      cursor: not-allowed;
     }
   </style>
 </head>
 <body>
-  <div id="messages"></div>
-  <input type="text" id="input" placeholder="ID 77 Answer" />
-  <button id="submit">Submit</button>
+  <div class="panel-container">
+    <div id="messages"></div>
+
+    <div class="tools">
+      <label for="shapeTool">Shape:</label>
+      <select id="shapeTool">
+        <option value="line">Line</option>
+        <option value="rectangle">Rectangle</option>
+        <option value="pentagon">Pentagon</option>
+        <option value="hexagon">Hexagon</option>
+        <option value="oval">Oval</option>
+        <option value="rhombus">Rhombus</option>
+      </select>
+
+      <label for="lineWidth">Line Width:</label>
+      <input type="range" id="lineWidth" min="1" max="15" value="2">
+      <span id="lineWidthValue">2</span>
+
+      <button id="eraseAll">Erase All</button>
+    </div>
+
+    <canvas id="drawCanvas"></canvas>
+
+    <div style="display: flex;">
+      <input type="text" id="input" placeholder="ID 77 Answer" />
+      <button id="submit">Submit</button>
+    </div>
+  </div>
   <script src="panel.js"></script>
 </body>
 </html>
