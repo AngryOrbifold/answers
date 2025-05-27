@@ -386,7 +386,7 @@ function sendCanvasToBackend(id) {
       formData.append('image', blob, `canvas_id${id}.jpg`);
       formData.append('id', id);
 
-      fetch(`https://twitch-extension-backend.onrender.com/upload-image`, {
+      fetch(`https://twitch-extension-backend.onrender.com/submit-image`, {
         method: 'POST',
         body: formData
       })
