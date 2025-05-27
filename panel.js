@@ -111,4 +111,4 @@ async function sendAnswer() {
   }
 }
 
-submitBtn.onclick = sendAnswer;
+submitBtn.addEventListener('click', sendAnswer);
