@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Answer Panel</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 10px;
+    }
+    #messages {
+      border: 1px solid #ccc;
+      height: 100px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+      padding: 5px;
+      font-size: 14px;
+      background: #f9f9f9;
+    }
+    #input {
+      width: 90%;
+      padding: 5px;
+    }
+    #submit {
+      padding: 5px 10px;
+    }
+  </style>
+  <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
+</head>
+<body>
+  <div id="messages"></div>
+  <input type="text" id="input" placeholder="ID 77 Answer" />
+  <button id="submit">Submit</button>
+  <script src="panel.js"></script>
+</body>
+</html>
