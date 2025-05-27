@@ -313,6 +313,10 @@ async function sendAnswer() {
   addMessage(`You: ${answer}`, 'user');
   input.value = '';
   submitBtn.disabled = true;
+  //erase canvas
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  shapes = [];
+  undone = []
 
   // Check for exact pattern: "ID <number>"
   const exactIdMatch = answer.match(/^ID\s+(\d+)$/i);
