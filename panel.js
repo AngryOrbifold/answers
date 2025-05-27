@@ -282,7 +282,7 @@ async function sendAnswer() {
     const data = JSON.parse(text);
     addMessage(data.reply || "Bot: No reply received from server.", 'bot');
 
-    if (idNumber && !isCanvasBlank(canvas)) await sendCanvasToBackend(idNumber);
+    if (idNumber && !isCanvasBlank(canvas)) await sendCanvasToBackend(idNumber, token);
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     shapes = [];
@@ -304,7 +304,7 @@ function isCanvasBlank(canvas) {
   return canvas.toDataURL() === blank.toDataURL();
 }
 
-function sendCanvasToBackend(id) {
+function sendCanvasToBackend(id, token) {
   return new Promise((resolve, reject) => {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
