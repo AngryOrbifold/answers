@@ -14,19 +14,16 @@ function addMessage(text, sender = 'bot') {
   messages.scrollTop = messages.scrollHeight;
 }
 
-window.addEventListener('message', (event) => {
-  const data = event.data;
-  if (data?.type === 'twitch-token' && data.token) {
-    sessionStorage.setItem('twitchAccessToken', data.token);
-    console.log("✅ Token saved:", data.token);
-    initApp();
+window.addEventListener('load', () => {
+  const hash = window.location.hash.substring(1);
+  const params = new URLSearchParams(hash);
+  const accessToken = params.get('access_token');
+  if (accessToken) {
+    sessionStorage.setItem('twitchAccessToken', accessToken);
+    history.replaceState(null, '', window.location.pathname);
   }
+  initApp();
 });
-
-window.onload = () => {
-  console.log("Iframe loaded, sending ready message");
-  window.parent.postMessage({ type: 'iframe-ready' }, '*');
-};
 
 function initApp() {
   const token = sessionStorage.getItem('twitchAccessToken');
