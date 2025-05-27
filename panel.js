@@ -31,9 +31,11 @@ window.addEventListener('load', () => {
 });
 
 window.addEventListener('message', (event) => {
+  console.log("🔔 Iframe received message:", event.data);
   const data = event.data;
   if (data?.type === 'twitch-token' && data.token) {
     sessionStorage.setItem('twitchAccessToken', data.token);
+    console.log("✅ Token saved:", data.token);
     initApp();
   }
 });
