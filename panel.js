@@ -47,7 +47,7 @@ function sendAnswer() {
       channelId,
       userId
     })
-    //mode: 'cors', // optional, default
+    mode: 'cors', // optional, default
   })
   .then(async res => {
     const contentType = res.headers.get("content-type");
