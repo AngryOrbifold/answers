@@ -1,11 +1,47 @@
-let channelId = null;
+let channelId = null;  // if you want to set it from somewhere, or hardcode
 let username = null;
 let userId = null;
-let token = null;  // Global token variable
 
 const input = document.getElementById('input');
 const submitBtn = document.getElementById('submit');
 const messages = document.getElementById('messages');
+
+const token = sessionStorage.getItem("twitchAccessToken");  // Load token once
+
+if (!token) {
+  addMessage("Bot: You must log in first.", 'bot');
+  submitBtn.disabled = true;
+} else {
+  // Fetch user info from Twitch API to get username and userId
+  fetch("https://api.twitch.tv/helix/users", {
+    headers: {
+      "Authorization": "Bearer " + token,
+      "Client-Id": "YOUR_TWITCH_CLIENT_ID"  // replace with your client ID
+    }
+  })
+  .then(res => {
+    if (!res.ok) throw new Error(`Failed to fetch user info: ${res.status}`);
+    return res.json();
+  })
+  .then(data => {
+    if (data.data && data.data.length > 0) {
+      const user = data.data[0];
+      username = user.login;
+      userId = user.id;
+      channelId = user.id;  // or wherever your channel ID comes from
+
+      addMessage(`Bot: Logged in as ${username}`, 'bot');
+    } else {
+      addMessage("Bot: Could not get user info.", 'bot');
+      submitBtn.disabled = true;
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    addMessage("Bot: Error getting user info.", 'bot');
+    submitBtn.disabled = true;
+  });
+}
 
 function addMessage(text, sender = 'bot') {
   const div = document.createElement('div');
@@ -28,12 +64,13 @@ async function sendAnswer() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + oauthAccessToken  // <-- Twitch OAuth token
+        'Authorization': 'Bearer ' + token
       },
       body: JSON.stringify({
         answer,
-        userId,   // optional, can also be read from token on backend
-        username  // optional, same here
+        userId,
+        username,
+        channelId
       }),
       mode: 'cors',
     });
@@ -43,7 +80,6 @@ async function sendAnswer() {
 
     const data = JSON.parse(text);
     addMessage(data.reply || "Bot: No reply received from server.", 'bot');
-
   } catch (err) {
     console.error("Request error:", err);
     addMessage("Bot: Error sending your answer.", 'bot');
@@ -54,32 +90,3 @@ async function sendAnswer() {
 }
 
 submitBtn.onclick = sendAnswer;
-
-function parseJwt(token) {
-  try {
-    return JSON.parse(atob(token.split('.')[1]));
-  } catch (e) {
-    console.error("Failed to decode JWT", e);
-    return null;
-  }
-}
-
-Twitch.ext.onContext((context, changed) => {
-  console.log("Extension context changed", context, changed);
-});
-
-Twitch.ext.onVisibilityChanged = function(visible, context) {
-  console.log("Panel visibility changed", visible);
-};
-
-window.Twitch.ext.onAuthorized(auth => {
-  token = auth.token;  // Store token globally
-  const payload = parseJwt(token);
-
-  channelId = payload.channel_id;
-  userId = payload.user_id;  // this will be available only if user has granted permission
-
-  console.log("JWT payload:", payload);
-  console.log("userId:", userId);
-  console.log("Sending token:", token);
-});
