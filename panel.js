@@ -294,19 +294,19 @@ async function sendAnswer() {
     // If answer matches "ID number" and canvas is not blank,
     // add the base64 image to the payload
     if (idNumber && !isCanvasBlank(canvas)) {
-      // Threshold canvas to black & white
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-      /*
-      for (let i = 0; i < data.length; i += 4) {
-        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-        const value = avg > 127 ? 255 : 0;
-        data[i] = data[i + 1] = data[i + 2] = value;
-      }
-      ctx.putImageData(imageData, 0, 0); 
-      */
-
-      // Get base64 image string (without data:image/... prefix)
+      const ctx = canvas.getContext("2d");
+    
+      // Save the current drawing (as image data)
+      const drawing = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    
+      // Fill the canvas with white
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+      // Redraw the drawing on top
+      ctx.putImageData(drawing, 0, 0);
+    
+      // Export to base64 PNG string
       const dataUrl = canvas.toDataURL('image/png');
       const base64Image = dataUrl.split(',')[1];
       payload.image = base64Image;
