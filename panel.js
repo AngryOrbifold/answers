@@ -303,11 +303,11 @@ async function sendAnswer() {
         const value = avg > 127 ? 255 : 0;
         data[i] = data[i + 1] = data[i + 2] = value;
       }
+      ctx.putImageData(imageData, 0, 0); 
       */
-      ctx.putImageData(imageData, 0, 0);
 
       // Get base64 image string (without data:image/... prefix)
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+      const dataUrl = canvas.toDataURL('image/png');
       const base64Image = dataUrl.split(',')[1];
       payload.image = base64Image;
     }
