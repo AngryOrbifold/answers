@@ -269,7 +269,10 @@ submitBtn.addEventListener('click', sendAnswer);
 
 async function sendAnswer() {
   const token = sessionStorage.getItem("twitchAccessToken");
-  if (!token) return addMessage("Bot: You must log in first.", 'bot');
+  if (!token) {
+    addMessage("Bot: You must log in first.", 'bot');
+    return;
+  }
 
   const answer = input.value.trim();
   if (!answer) return;
@@ -278,31 +281,52 @@ async function sendAnswer() {
   input.value = '';
   submitBtn.disabled = true;
 
+  // Check if answer is exactly like "ID <number>"
   const exactIdMatch = answer.match(/^ID\s+(\d+)$/i);
   const idNumber = exactIdMatch ? exactIdMatch[1] : null;
-
   try {
+    let payload = {
+      answer,
+      userId,     // make sure these are set properly in your script
+      username,
+      channelId
+    };
+    // If answer matches "ID number" and canvas is not blank,
+    // add the base64 image to the payload
+    if (idNumber && !isCanvasBlank(canvas)) {
+      // Threshold canvas to black & white
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        const value = avg > 127 ? 255 : 0;
+        data[i] = data[i + 1] = data[i + 2] = value;
+      }
+      ctx.putImageData(imageData, 0, 0);
+
+      // Get base64 image string (without data:image/... prefix)
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+      const base64Image = dataUrl.split(',')[1];
+      payload.image = base64Image;
+    }
     const res = await fetch('https://twitch-extension-backend.onrender.com/submit-answer', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + token
       },
-      body: JSON.stringify({ answer, userId, username, channelId }),
+      body: JSON.stringify(payload),
       mode: 'cors',
     });
-
     const text = await res.text();
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${text}`);
     const data = JSON.parse(text);
     addMessage(data.reply || "Bot: No reply received from server.", 'bot');
-
-    if (idNumber && !isCanvasBlank(canvas)) await sendCanvasToBackend(idNumber, token);
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    shapes = [];
-    undone = [];
-
+    if (idNumber) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      shapes = [];
+      undone = [];
+    }
   } catch (err) {
     console.error("Request error:", err);
     addMessage("Bot: Error sending your answer.", 'bot');
@@ -317,54 +341,4 @@ function isCanvasBlank(canvas) {
   blank.width = canvas.width;
   blank.height = canvas.height;
   return canvas.toDataURL() === blank.toDataURL();
-}
-
-function sendCanvasToBackend(id, token) {
-  return new Promise((resolve, reject) => {
-    try {
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-      for (let i = 0; i < data.length; i += 4) {
-        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-        const value = avg > 127 ? 255 : 0;
-        data[i] = data[i + 1] = data[i + 2] = value;
-      }
-      ctx.putImageData(imageData, 0, 0);
-      canvas.toBlob(blob => {
-        if (!blob) {
-          console.error("Blob generation failed");
-          reject("Blob generation failed");
-          return;
-        }
-        const formData = new FormData();
-        formData.append('image', blob, `canvas_id${id}.jpg`);
-        formData.append('id', id);
-
-        fetch(`https://twitch-extension-backend.onrender.com/submit-image`, {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Bearer ' + token
-          },
-          body: formData
-        })
-          .then(res => {
-            if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
-            return res.text();
-          })
-          .then(text => {
-            console.log("Upload response:", text);
-            addMessage("Bot: Drawing sent with ID " + id, 'bot');
-            resolve();
-          })
-          .catch(err => {
-            console.error("Upload error:", err);
-            addMessage("Bot: Error sending image.", 'bot');
-            reject(err);
-          });
-      }, 'image/jpeg', 0.95);
-    } catch (err) {
-      console.error("Unexpected error in sendCanvasToBackend:", err);
-      reject(err);
-    }
-  });
 }
