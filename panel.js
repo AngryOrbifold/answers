@@ -97,32 +97,47 @@ canvas.addEventListener('mouseup', e => {
   redrawCanvas();
 });
 
-function floodFill(x, y, fillColor = [0, 0, 0, 255]) {
+function floodFill(x, y, fillColor = [0, 0, 0, 255], tolerance = 180) {
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = imageData.data;
   const width = canvas.width;
-
+  const height = canvas.height;
   const stack = [[x, y]];
   const baseIdx = (y * width + x) * 4;
   const targetColor = data.slice(baseIdx, baseIdx + 4);
 
-  const matchColor = (i) => targetColor.every((v, j) => data[i + j] === v);
-  const setColor = (i) => fillColor.forEach((v, j) => data[i + j] = v);
+  const matchColor = (i) => {
+    for (let j = 0; j < 4; j++) {
+      if (Math.abs(data[i + j] - targetColor[j]) > tolerance) return false;
+    }
+    return true;
+  };
 
+  const setColor = (i) => {
+    for (let j = 0; j < 4; j++) {
+      data[i + j] = fillColor[j];
+    }
+  };
+  const visited = new Uint8Array(width * height);
   while (stack.length) {
     const [cx, cy] = stack.pop();
-    const i = (cy * width + cx) * 4;
+    const idx = cy * width + cx;
+    if (visited[idx]) continue;
+    visited[idx] = 1;
+    const i = idx * 4;
     if (!matchColor(i)) continue;
     setColor(i);
     if (cx > 0) stack.push([cx - 1, cy]);
     if (cx < width - 1) stack.push([cx + 1, cy]);
     if (cy > 0) stack.push([cx, cy - 1]);
-    if (cy < canvas.height - 1) stack.push([cx, cy + 1]);
+    if (cy < height - 1) stack.push([cx, cy + 1]);
   }
 
+  ctx.putImageData(imageData, 0, 0);
   shapes.push({ type: 'fill', imageData });
   redrawCanvas();
 }
+
 
 function redrawCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
