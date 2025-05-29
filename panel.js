@@ -14,7 +14,6 @@ const lineWidthValue = document.getElementById('lineWidthValue');
 const shapeTool = document.getElementById('shapeTool');
 
 const ctx = canvas.getContext('2d');
-
 let drawing = false;
 let startX = 0;
 let startY = 0;
@@ -24,164 +23,193 @@ let previewShape = null;
 
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
-
-function resizeCanvas() {
-  const scale = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * scale;
-  canvas.height = rect.height * scale;
-  ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset
-  ctx.scale(scale, scale);           // Scale drawing context
-  redrawCanvas();
-}
-
 lineWidthInput.addEventListener('input', () => {
   lineWidthValue.textContent = lineWidthInput.value;
 });
 
+// Resize and scale the canvas to match CSS size × devicePixelRatio
+function resizeCanvas() {
+  const scale = window.devicePixelRatio || 1;
+  const rect  = canvas.getBoundingClientRect();
+  canvas.width  = rect.width  * scale;
+  canvas.height = rect.height * scale;
+  // Reset any transforms, then scale drawing context
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(scale, scale);
+  redrawCanvas();
+}
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// Get both CSS coords and physical (backing-pixel) coords
 function getMousePos(e) {
   const rect = canvas.getBoundingClientRect();
+  const cssX = e.clientX - rect.left;
+  const cssY = e.clientY - rect.top;
   const scale = window.devicePixelRatio || 1;
   return {
-    x: (e.clientX - rect.left),
-    y: (e.clientY - rect.top),
-    physX: Math.floor((e.clientX - rect.left) * scale),
-    physY: Math.floor((e.clientY - rect.top) * scale)
+    x: cssX,
+    y: cssY,
+    physX: Math.floor(cssX * scale),
+    physY: Math.floor(cssY * scale)
   };
 }
 
+// Clear all
 eraseBtn.addEventListener('click', () => {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
   shapes = [];
   undone = [];
+  redrawCanvas();
 });
 
+// Begin drawing or flooding
 canvas.addEventListener('mousedown', e => {
   const { x, y, physX, physY } = getMousePos(e);
   if (e.button === 2) {
+    // Right-click → flood fill
     floodFill(physX, physY);
     return;
   }
+  // Left-click → start drawing
   drawing = true;
   startX = x;
   startY = y;
 });
 
+// Preview on move
 canvas.addEventListener('mousemove', e => {
   if (!drawing) return;
   const { x, y } = getMousePos(e);
-  previewShape = { x1: startX, y1: startY, x2: x, y2: y };
+  previewShape = {
+    type:      shapeTool.value,
+    x1:        startX,
+    y1:        startY,
+    x2:        x,
+    y2:        y,
+    fill:      false,
+    lineWidth: parseInt(lineWidthInput.value, 10),
+    preview:   true
+  };
   redrawCanvas();
 });
 
+// Commit shape on release
 canvas.addEventListener('mouseup', e => {
   if (!drawing) return;
   drawing = false;
   const { x, y } = getMousePos(e);
-  shapes.push({ x1: startX, y1: startY, x2: x, y2: y, type: shapeTool.value, fill: false, lineWidth: parseInt(lineWidthInput.value, 10) });
+  shapes.push({
+    type:      shapeTool.value,
+    x1:        startX,
+    y1:        startY,
+    x2:        x,
+    y2:        y,
+    fill:      e.button === 2,
+    lineWidth: parseInt(lineWidthInput.value, 10)
+  });
   previewShape = null;
+  undone = [];
   redrawCanvas();
 });
 
-function floodFill(x, y, fillColor = [0, 0, 0, 255], tolerance = 180) {
+// Flood-fill algorithm (operates on raw canvas pixels)
+function floodFill(x, y, fillColor = [0,0,0,255], tolerance = 180) {
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = imageData.data;
-  const width = canvas.width;
-  const height = canvas.height;
-  const stack = [[x, y]];
-  const baseIdx = (y * width + x) * 4;
-  const targetColor = data.slice(baseIdx, baseIdx + 4);
-
-  const matchColor = (i) => {
-    for (let j = 0; j < 4; j++) {
-      if (Math.abs(data[i + j] - targetColor[j]) > tolerance) return false;
+  const data      = imageData.data;
+  const width     = imageData.width;
+  const height    = imageData.height;
+  const stack     = [[x,y]];
+  const baseIdx   = (y*width + x)*4;
+  const targetCol = data.slice(baseIdx, baseIdx+4);
+  const visited   = new Uint8Array(width * height);
+  const matchColor = i => {
+    for (let j=0; j<4; j++) {
+      if (Math.abs(data[i+j] - targetCol[j]) > tolerance) return false;
     }
     return true;
   };
-
-  const setColor = (i) => {
-    for (let j = 0; j < 4; j++) {
-      data[i + j] = fillColor[j];
-    }
+  const setColor = i => {
+    for (let j=0; j<4; j++) data[i+j] = fillColor[j];
   };
-  const visited = new Uint8Array(width * height);
   while (stack.length) {
-    const [cx, cy] = stack.pop();
-    const idx = cy * width + cx;
+    const [cx,cy] = stack.pop();
+    const idx = cy*width + cx;
     if (visited[idx]) continue;
     visited[idx] = 1;
-    const i = idx * 4;
-    if (!matchColor(i)) continue;
-    setColor(i);
-    if (cx > 0) stack.push([cx - 1, cy]);
-    if (cx < width - 1) stack.push([cx + 1, cy]);
-    if (cy > 0) stack.push([cx, cy - 1]);
-    if (cy < height - 1) stack.push([cx, cy + 1]);
+    const pixIdx = idx*4;
+    if (!matchColor(pixIdx)) continue;
+    setColor(pixIdx);
+    if (cx>0)           stack.push([cx-1, cy]);
+    if (cx<width-1)     stack.push([cx+1, cy]);
+    if (cy>0)           stack.push([cx, cy-1]);
+    if (cy<height-1)    stack.push([cx, cy+1]);
   }
-
   ctx.putImageData(imageData, 0, 0);
   shapes.push({ type: 'fill', imageData });
   redrawCanvas();
 }
-
-
+// Redraw everything + preview
 function redrawCanvas() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  shapes.forEach(shape => drawShape(shape));
+  // clear in CSS-pixel space
+  const rect = canvas.getBoundingClientRect();
+  ctx.clearRect(0, 0, rect.width, rect.height);
+
+  shapes.forEach(s => drawShape(s));
   if (previewShape) drawShape(previewShape);
 }
-
+// Draw one shape
 function drawShape(shape) {
-  if (shape.type === 'fill') return ctx.putImageData(shape.imageData, 0, 0);
-
+  if (shape.type === 'fill') {
+    return ctx.putImageData(shape.imageData, 0, 0);
+  }
   const { type, x1, y1, x2, y2, fill, lineWidth, preview } = shape;
-  const color = preview ? '#999' : '#000';
-  ctx.strokeStyle = ctx.fillStyle = color;
-  ctx.lineWidth = lineWidth;
+  ctx.lineWidth   = lineWidth;
+  ctx.strokeStyle = ctx.fillStyle = (preview ? '#999' : '#000');
   ctx.beginPath();
-
   const w = x2 - x1, h = y2 - y1;
-  const centerX = x1 + w / 2;
-  const centerY = y1 + h / 2;
-
-  switch (type) {
+  const cx = x1 + w/2, cy = y1 + h/2;
+  switch(type) {
     case 'line':
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
+      ctx.moveTo(x1,y1);
+      ctx.lineTo(x2,y2);
       break;
     case 'rectangle':
-      return fill ? ctx.fillRect(x1, y1, w, h) : ctx.strokeRect(x1, y1, w, h);
+      return fill
+        ? ctx.fillRect(x1,y1,w,h)
+        : ctx.strokeRect(x1,y1,w,h);
     case 'pentagon':
-      drawPolygon(centerX, centerY, Math.min(Math.abs(w), Math.abs(h)) / 2, 5, -Math.PI / 2);
+      drawPolygon(cx, cy, Math.min(Math.abs(w),Math.abs(h))/2, 5, -Math.PI/2);
       break;
     case 'hexagon':
-      drawPolygon(centerX, centerY, Math.min(Math.abs(w), Math.abs(h)) / 2, 6);
+      drawPolygon(cx, cy, Math.min(Math.abs(w),Math.abs(h))/2, 6, 0);
       break;
     case 'rhombus':
-      ctx.moveTo(centerX, y1);
-      ctx.lineTo(x2, centerY);
-      ctx.lineTo(centerX, y2);
-      ctx.lineTo(x1, centerY);
+      ctx.moveTo(cx, y1);
+      ctx.lineTo(x2,cy);
+      ctx.lineTo(cx, y2);
+      ctx.lineTo(x1,cy);
       ctx.closePath();
       break;
     case 'oval':
-      ctx.ellipse(centerX, centerY, Math.abs(w) / 2, Math.abs(h) / 2, 0, 0, 2 * Math.PI);
+      ctx.ellipse(cx, cy, Math.abs(w)/2, Math.abs(h)/2, 0, 0, 2*Math.PI);
       break;
     default:
       return;
   }
-
   fill ? ctx.fill() : ctx.stroke();
 }
-
-function drawPolygon(cx, cy, radius, sides, rotation = 0) {
-  if (sides < 3) return;
-  const angle = (2 * Math.PI) / sides;
-  ctx.moveTo(cx + radius * Math.cos(rotation), cy + radius * Math.sin(rotation));
-  for (let i = 1; i <= sides; i++) {
-    ctx.lineTo(cx + radius * Math.cos(i * angle + rotation), cy + radius * Math.sin(i * angle + rotation));
+// Regular polygon helper
+function drawPolygon(cx, cy, radius, sides, rotation=0) {
+  if (sides<3) return;
+  const angle = 2*Math.PI/sides;
+  ctx.moveTo(cx + radius*Math.cos(rotation),
+             cy + radius*Math.sin(rotation));
+  for (let i=1; i<=sides; i++) {
+    ctx.lineTo(
+      cx + radius*Math.cos(i*angle + rotation),
+      cy + radius*Math.sin(i*angle + rotation)
+    );
   }
   ctx.closePath();
 }
