@@ -36,8 +36,8 @@ lineWidthInput.addEventListener('input', () => {
 function getMousePos(e) {
   const rect = canvas.getBoundingClientRect();
   return {
-    x: (e.clientX - rect.left) * (canvas.width / rect.width),
-    y: (e.clientY - rect.top) * (canvas.height / rect.height)
+    x: (e.clientX - rect.left),
+    y: (e.clientY - rect.top)
   };
 }
 
@@ -48,9 +48,9 @@ eraseBtn.addEventListener('click', () => {
 });
 
 canvas.addEventListener('mousedown', (e) => {
-  const pos = getMousePos(e);
-  const x = Math.floor(pos.x);
-  const y = Math.floor(pos.y);
+  const { x: cssX, y: cssY } = getMousePosCSS(e);
+  const physX = Math.floor(cssX * scale);
+  const physY = Math.floor(cssY * scale);
 
   if (e.button === 2) {
     e.preventDefault();
@@ -65,33 +65,16 @@ canvas.addEventListener('mousedown', (e) => {
 
 canvas.addEventListener('mousemove', e => {
   if (!drawing) return;
-  const pos = getMousePos(e);
-  previewShape = {
-    type: shapeTool.value,
-    x1: startX,
-    y1: startY,
-    x2: pos.x,
-    y2: pos.y,
-    fill: false,
-    lineWidth: parseInt(lineWidthInput.value),
-    preview: true
-  };
+  const { x, y } = getMousePosCSS(e);
+  previewShape = { /* ... x1: startX, y1: startY, x2: x, y2: y ... */ };
   redrawCanvas();
 });
 
 canvas.addEventListener('mouseup', e => {
   if (!drawing) return;
   drawing = false;
-  const pos = getMousePos(e);
-  shapes.push({
-    type: shapeTool.value,
-    x1: startX,
-    y1: startY,
-    x2: pos.x,
-    y2: pos.y,
-    fill: e.button === 2,
-    lineWidth: parseInt(lineWidthInput.value)
-  });
+  const { x, y } = getMousePosCSS(e);
+  shapes.push({ /* ... x1: startX, y1: startY, x2: x, y2: y ... */ });
   previewShape = null;
   undone = [];
   redrawCanvas();
