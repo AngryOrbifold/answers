@@ -18,7 +18,7 @@ const ctx = canvas.getContext('2d');
 const scale = window.devicePixelRatio || 1;
 canvas.width = canvas.offsetWidth * scale;
 canvas.height = canvas.offsetHeight * scale;
-ctx.scale(scale, scale);
+ctx.setTransform(scale, 0, 0, scale, 0, 0);
 
 let drawing = false;
 let startX = 0;
@@ -36,8 +36,8 @@ lineWidthInput.addEventListener('input', () => {
 function getMousePos(e) {
   const rect = canvas.getBoundingClientRect();
   return {
-    x: (e.clientX - rect.left) * (canvas.width / rect.width),
-    y: (e.clientY - rect.top) * (canvas.height / rect.height)
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top
   };
 }
 
