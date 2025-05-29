@@ -36,8 +36,8 @@ lineWidthInput.addEventListener('input', () => {
 function getMousePos(e) {
   const rect = canvas.getBoundingClientRect();
   return {
-    x: e.clientX - rect.left,
-    y: e.clientY - rect.top
+    x: (e.clientX - rect.left) * scale,
+    y: (e.clientY - rect.top) * scale
   };
 }
 
