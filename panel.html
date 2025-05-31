@@ -24,7 +24,7 @@
       border: 1px solid #ccc;
       height: 60px;
       overflow-y: auto;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
       padding: 8px;
       font-size: 14px;
       background: #f9f9f9;
@@ -32,7 +32,26 @@
     }
 
     .tools {
-      margin-bottom: 10px; /* 🌟 Space between tools and canvas */
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      overflow-x: auto;
+      white-space: nowrap;
+      gap: 8px;
+      flex-wrap: wrap; /* Remove this line if you strictly want one line, even if it overflows */
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .tools label {
+      white-space: nowrap;
+    }
+    .tools select,
+    .tools input[type="range"],
+    .tools span {
+      font-size: 12px;
+      max-width: 80px;
+      flex-shrink: 0;
     }
 
     .tools span {
@@ -70,13 +89,14 @@
     /* 🌟 Styled submit and erase buttons the same */
     #submit,
     #eraseAll {
-      padding: 10px 16px;
-      font-size: 14px;
+      padding: 6px 16px;
+      font-size: 12px;
       cursor: pointer;
       background: #007bff;
       color: white;
       border: none;
       border-radius: 4px;
+      white-space: nowrap;
       transition: background 0.2s ease;
     }
 
@@ -95,6 +115,36 @@
       display: flex;
       margin-bottom: 10px;
     }
+
+    #matrixSize,
+    #lineWidth {
+      width: 60px;
+      height: 4px;
+      margin: 0;
+    }
+
+    #matrixSize::-webkit-slider-thumb {
+      width: 12px;
+      height: 12px;
+    }
+
+    #matrixSize::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+    }
+
+    #matrixSize::-ms-thumb {
+      width: 12px;
+      height: 12px;
+    }
+
+    #matrixSizeValue,
+    #lineWidthValue {
+      display: inline-block;
+      width: 16px;
+      text-align: center;
+    }
+
   </style>
 </head>
 <body>
@@ -115,11 +165,16 @@
         <option value="hexagon">Hexagon</option>
         <option value="oval">Oval</option>
         <option value="rhombus">Rhombus</option>
+        <option value="matrix">Matrix</option>
       </select>
 
       <label for="lineWidth">Line Width:</label>
       <input type="range" id="lineWidth" min="1" max="15" value="2">
       <span id="lineWidthValue">2</span>
+
+      <label for="matrixSize">Matrix Size:</label>
+      <input type="range" id="matrixSize" min="3" max="5" value="3">
+      <span id="matrixSizeValue">3</span>
 
       <button id="eraseAll">Erase All</button>
     </div>
