@@ -12,6 +12,10 @@ const eraseBtn = document.getElementById('eraseAll');
 const lineWidthInput = document.getElementById('lineWidth');
 const lineWidthValue = document.getElementById('lineWidthValue');
 const shapeTool = document.getElementById('shapeTool');
+const matrixSizeInput = document.getElementById('matrixSize');
+const matrixSizeValue = document.getElementById('matrixSizeValue');
+
+
 
 const ctx = canvas.getContext('2d');
 let drawing = false;
@@ -25,6 +29,10 @@ canvas.addEventListener('contextmenu', e => e.preventDefault());
 
 lineWidthInput.addEventListener('input', () => {
   lineWidthValue.textContent = lineWidthInput.value;
+});
+
+matrixSizeInput.addEventListener('input', () => {
+  matrixSizeValue.textContent = matrixSizeInput.value;
 });
 
 // Resize and scale the canvas to match CSS size × devicePixelRatio
@@ -195,6 +203,40 @@ function drawShape(shape) {
       ctx.ellipse(cx, cy, Math.abs(w)/2, Math.abs(h)/2, 0, 0, 2*Math.PI);
       break;
     default:
+      return;
+    case 'matrix': 
+      const size = parseInt(matrixSizeInput.value, 10);
+      // Enforce square shape
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const side = Math.min(Math.abs(dx), Math.abs(dy));
+
+      const wSq = dx >= 0 ? side : -side;
+      const hSq = dy >= 0 ? side : -side;
+      const x2Sq = x1 + wSq;
+      const y2Sq = y1 + hSq;
+
+      const cellWidth = wSq / size;
+      const cellHeight = hSq / size;
+
+      // Outer rectangle
+      ctx.strokeRect(x1, y1, wSq, hSq);
+      for (let i = 1; i < size; i++) {
+        const x = x1 + i * cellWidth;
+        const y = y1 + i * cellHeight;
+
+        // Vertical lines
+        ctx.beginPath();
+        ctx.moveTo(x, y1);
+        ctx.lineTo(x, y2Sq);
+        ctx.stroke();
+
+        // Horizontal lines
+        ctx.beginPath();
+        ctx.moveTo(x1, y);
+        ctx.lineTo(x2Sq, y);
+        ctx.stroke();
+      }
       return;
   }
   fill ? ctx.fill() : ctx.stroke();
