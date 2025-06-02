@@ -16,7 +16,6 @@ const matrixSizeInput = document.getElementById('matrixSize');
 const matrixSizeValue = document.getElementById('matrixSizeValue');
 
 
-
 const ctx = canvas.getContext('2d');
 let drawing = false;
 let startX = 0;
@@ -121,6 +120,38 @@ canvas.addEventListener('mouseup', e => {
   redrawCanvas();
 });
 
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const touch = e.touches[0];
+  const { x, y } = getMousePos(touch);
+  drawing = true;
+  startX = x;
+  startY = y;
+});
+
+canvas.addEventListener('touchmove', e => {
+  if (!drawing) return;
+  const touch = e.touches[0];
+  const { x, y } = getMousePos(touch);
+  previewShape = {
+    type: shapeTool.value,
+    x1: startX,
+    y1: startY,
+    x2: x,
+    y2: y,
+    fill: false,
+    lineWidth: parseInt(lineWidthInput.value, 10),
+    preview: true
+  };
+  redrawCanvas();
+});
+
+canvas.addEventListener('touchend', e => {
+  drawing = false;
+  previewShape = null;
+  redrawCanvas();
+});
+
 // Flood-fill algorithm (operates on raw canvas pixels)
 function floodFill(x, y, fillColor = [0,0,0,255], tolerance = 180) {
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -202,8 +233,6 @@ function drawShape(shape) {
     case 'oval':
       ctx.ellipse(cx, cy, Math.abs(w)/2, Math.abs(h)/2, 0, 0, 2*Math.PI);
       break;
-    default:
-      return;
     case 'matrix': 
       const size = parseInt(matrixSizeInput.value, 10);
       // Enforce square shape
@@ -237,6 +266,7 @@ function drawShape(shape) {
         ctx.lineTo(x2Sq, y);
         ctx.stroke();
       }
+      default:
       return;
   }
   fill ? ctx.fill() : ctx.stroke();
